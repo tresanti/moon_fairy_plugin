@@ -1,17 +1,19 @@
-
 import re
+
 from pydantic import BaseModel, Field, field_validator
 
 
 class Fable:
-    value:str = ''
-    email:str = Field(...,description="email")
+    value: str | None = None
+    email: str = Field(..., description="email")
+
 
 class EmptyProps(BaseModel):
     pass
 
+
 class EmailProps(BaseModel):  #
-    email: str = Field(...,description="email")
+    email: str = Field(..., description="email")
 
     @field_validator("email", mode='after')
     @classmethod

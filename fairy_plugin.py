@@ -7,7 +7,7 @@ from cat.plugins.fairy_moon.email_service import send_smtp_email
 from cat.plugins.fairy_moon.models import Fable, EmailProps, EmptyProps
 from cat.plugins.fairy_moon.settings import FairySettings
 
-story_characters = 7000
+story_characters = 3000
 
 
 @hook()
@@ -83,6 +83,7 @@ class EmailForm(CatForm):  #
         "send mail"
     ]
     stop_examples = [  #
+        'non inviare email',
         "no",
         "not send",
         "not send email",
@@ -91,8 +92,10 @@ class EmailForm(CatForm):  #
     ask_confirm = True  #
 
     def submit(self, form_data):  #
+        response = send_smtp_email('Ti insegno una favola.', str(Fable.value), self.extract()['email'], self._cat)
+        Fable.value = None
         return {
-            "output": f"{send_smtp_email('Ti insegno una favola.', str(Fable.value), self.extract()['email'], self._cat)}"
+            "output": f"{response}"
         }
 
     def message(self):  #
@@ -102,9 +105,15 @@ class EmailForm(CatForm):  #
         if len(errors) > 0:
             out += f'\nPuoi controllare perchè le informazioni che mi hai dato non sono valise:{errors}'
         if len(missing_fields) > 0:
-            out += f"""\n\nHo bisogno di un email dove pote inviare la storia."""
+            if Fable.value is None:
+                print('Fable.value is None')
+                self._state = CatFormState.CLOSED
+                out += "\n\nNon ho una favola da inviare."
+            else:
+                out += f"""\n\nHo bisogno di un email dove pote inviare la storia."""
         if self._state == CatFormState.WAIT_CONFIRM:
             out += "\n Confermi l'invio?"
+
         return {
             "output": out
         }
