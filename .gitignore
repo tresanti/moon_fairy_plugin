@@ -152,4 +152,4 @@ cython_debug/
 .idea/
 
 # Cheshire Cat Plugin settings
-settings.json
+../fairy_moon/settings.json
