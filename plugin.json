@@ -1,10 +1,10 @@
 {
-    "name": "My plugin",
+    "name": "Moon - fAIry",
     "version": "0.0.1",
-    "description": "Description of my_plugin.",
-    "author_name": "Me",
-    "author_url": "https://mywebsite.me",
-    "plugin_url": "https://github.com/my_name/my_plugin",
-    "tags": "cat, template, example",
-    "thumb": "https://raw.githubusercontent.com/my_repo_path/my_plugin.png"
+    "description": "Use AI to generate educational fables in Italian (for now) and also receive them by email. The model returns the fable with html markup.",
+    "author_name": "Ivan Santonastase",
+    "author_url": "https://github.com/tresanti",
+    "plugin_url": "https://github.com/tresanti/moon_fairy_plugin",
+    "tags": "fables, stories, fairy tales, tales, education",
+    "thumb": "https://scontent.fblq4-1.fna.fbcdn.net/v/t39.30808-6/480278601_10235573752874001_6406823739046331786_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=127cfc&_nc_ohc=zovRoohnjUEQ7kNvgGzms7Q&_nc_oc=AdgkMx1S3LKzWHm36ZjiDqWrQTbYysW5BLjAsB4ot5WjvzR_xqPmhc5Deu0eQljaIU8&_nc_zt=23&_nc_ht=scontent.fblq4-1.fna&_nc_gid=A76jWLgdw77wIfmaZokgIBT&oh=00_AYBsX54ewYEPqHT09afwDFYgJdcnVk8wa7dIK_8yBuUrzw&oe=67BADDDE"
 }

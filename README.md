@@ -1,26 +1,18 @@
-# My plugin
+# Moon fAIry plugin
 
-[![awesome plugin](https://custom-icon-badges.demolab.com/static/v1?label=&message=awesome+plugin&color=383938&style=for-the-badge&logo=cheshire_cat_ai)](https://)  
-[![Awesome plugin](https://custom-icon-badges.demolab.com/static/v1?label=&message=Awesome+plugin&color=000000&style=for-the-badge&logo=cheshire_cat_ai)](https://)  
-[![awesome plugin](https://custom-icon-badges.demolab.com/static/v1?label=&message=awesome+plugin&color=F4F4F5&style=for-the-badge&logo=cheshire_cat_black)](https://)
+<img src="https://scontent.fblq4-1.fna.fbcdn.net/v/t39.30808-6/480278601_10235573752874001_6406823739046331786_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=127cfc&_nc_ohc=zovRoohnjUEQ7kNvgGzms7Q&_nc_oc=AdgkMx1S3LKzWHm36ZjiDqWrQTbYysW5BLjAsB4ot5WjvzR_xqPmhc5Deu0eQljaIU8&_nc_zt=23&_nc_ht=scontent.fblq4-1.fna&_nc_gid=A76jWLgdw77wIfmaZokgIBT&oh=00_AYBsX54ewYEPqHT09afwDFYgJdcnVk8wa7dIK_8yBuUrzw&oe=67BADDDE" width="150" height="150" alt="Moon fAIry logo">
 
-Write here all the useful information about your plugin.
 
-This repository is the template to automate the release of official Cheshire Cat AI plugins. 
+## Description
+
+Moon fAIry is a plugin for the Moon app that generates educational fables using AI. The plugin sends the generated fable to the user's email address.
+
 
 ## Usage
 
-1. Create a new repository clicking on the `Use this template` button.
-2. Clone your new repo directly in the Cat's `plugins` folder.
-3. Run the `setup.py` script:
-```bash
-python setup.py
-```
-The script will prompt you to write the name of your plugin and make an initial setup setting the name in the files.
-
-4. Start developing!
-
-> **Important**
-> A new release of your plugin is triggered every time you set a new `version` in the `plugin.json` file.
-> Please, remember to set it correctly every time you want to release an update.
-
+To use the plugin, follow these steps:
+1. Open Cheshire Cat AI and select the fAIry plugin.
+2. Enter your email address and any other required information.
+3. Your model will now be called Luna and will write fables based on a theme or a problem.
+At the end of the story, if SMTP information has been provided, you will be asked if you want to receive the fable by email.
+4. The model generates the story using HTML markup.
