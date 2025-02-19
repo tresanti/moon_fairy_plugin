@@ -7,7 +7,7 @@ from cat.plugins.fairy_moon.email_service import send_smtp_email
 from cat.plugins.fairy_moon.models import Fable, EmailProps, EmptyProps
 from cat.plugins.fairy_moon.settings import FairySettings
 
-story_characters = 3000
+story_characters = 7000
 
 
 @hook()
