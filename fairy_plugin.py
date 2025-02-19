@@ -102,8 +102,6 @@ class EmailForm(CatForm):  #
         if len(errors) > 0:
             out += f'\nPuoi controllare perchè le informazioni che mi hai dato non sono valise:{errors}'
         if len(missing_fields) > 0:
-            if self.extract()['email'] == '' or self.extract()['email'] is None:
-                return self._next()
             out += f"""\n\nHo bisogno di un email dove pote inviare la storia."""
         if self._state == CatFormState.WAIT_CONFIRM:
             out += "\n Confermi l'invio?"
