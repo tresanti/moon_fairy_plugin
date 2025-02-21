@@ -1,11 +1,16 @@
-from pydantic import BaseModel, Field, field_validator, ValidationError
+import re
+from pydantic import BaseModel, Field, field_validator, model_validator
+
 
 def validate_threshold(value):
-    if value is not None:
-        return True
+    if value is None or value == "":
+        return False
+    return True
 
-    return False
-
+def is_valid_email(email):
+    # Pattern per la validazione email
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return bool(re.match(pattern, email))
 
 
 class FairySettings(BaseModel):
@@ -16,26 +21,39 @@ class FairySettings(BaseModel):
     sender_password: str = Field(default="", description="Insert the sender password.")
     smtp_tls: bool = Field(default=False, description="Select if you want to use TLS.")
 
-    @field_validator("smtp_server")
-    @classmethod
-    def check_field_smtp_server(cls, threshold):
-        if not validate_threshold(threshold):
-            raise ValueError("SMTP server must be between 0 and 1")
+    @model_validator(mode='before')
+    def reset_fields_if_smtp_disabled(cls, values):
+        if not values.get('use_smtp_email', False):
+            values['smtp_server'] = ""
+            values['smtp_port'] = 587
+            values['sender_email'] = ""
+            values['sender_password'] = ""
+            values['smtp_tls'] = False
+        return values
 
-    @field_validator('smtp_port')
-    @classmethod
-    def check_smtp_port_required(cls, threshold):
-        if not validate_threshold(threshold):
-            raise ValueError('SMTP Port is required!')
+    @model_validator(mode='after')
+    def validate_smtp_settings(self) -> 'FairySettings':
+        if self.use_smtp_email:
+            if not validate_threshold(self.smtp_server):
+                raise ValueError("SMTP server is required when SMTP email is enabled")
 
-    @field_validator('sender_email')
-    @classmethod
-    def check_sender_email_required(cls, threshold):
-        if not validate_threshold(threshold):
-            raise ValueError('Sender Email is required!')
+            if not validate_threshold(str(self.smtp_port)):
+                raise ValueError("SMTP Port is required when SMTP email is enabled")
 
-    @field_validator('sender_password')
-    @classmethod
-    def check_sender_password_required(cls, threshold):
-        if not validate_threshold(threshold):
-            raise ValueError('Sender Password is required!')
+            if not validate_threshold(self.sender_email):
+                raise ValueError("Sender Email is required when SMTP email is enabled")
+
+            if not is_valid_email(self.sender_email):
+                raise ValueError("Invalid Sender Email format")
+
+            if not validate_threshold(self.sender_password):
+                raise ValueError("Sender Password is required when SMTP email is enabled")
+
+        else:
+            self.smtp_server = ""
+            self.smtp_port = 587
+            self.sender_email = ""
+            self.sender_password = ""
+            self.smtp_tls = False
+
+        return self
