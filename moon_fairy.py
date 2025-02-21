@@ -3,9 +3,9 @@ from cat.experimental.form import CatFormState
 from cat.mad_hatter.decorators import hook
 from cat.mad_hatter.decorators import plugin
 
-from cat.plugins.fairy_moon.email_service import send_smtp_email
-from cat.plugins.fairy_moon.models import Fable, EmailProps, EmptyProps
-from cat.plugins.fairy_moon.settings import FairySettings
+from cat.plugins.moon_fairy_plugin.email_service import send_smtp_email
+from cat.plugins.moon_fairy_plugin.models import Fable, EmailProps, EmptyProps
+from cat.plugins.moon_fairy_plugin.settings import FairySettings
 
 story_characters = 3000
 
