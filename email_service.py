@@ -17,7 +17,7 @@ def send_smtp_email(subject, body, to_email, cat):
     message["Subject"] = subject
     message.attach(MIMEText(body, "html"))
 
-    result_message = ''
+    result_message:str = ''
     try:
         # Abilita il debug SMTP
         if use_tls:
@@ -31,7 +31,6 @@ def send_smtp_email(subject, body, to_email, cat):
         result_message = "Favola inviata!"
     except Exception as e:
         print(f"Errore durante l'invio dell'email: {e}")
-        cat.llm('non inviare email')
         result_message = "Non sono riuscito ad inviare la storia."
     finally:
         return result_message
