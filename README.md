@@ -1,6 +1,6 @@
 # Moon fAIry plugin
 
-<img src="https://scontent.fblq4-1.fna.fbcdn.net/v/t39.30808-6/480278601_10235573752874001_6406823739046331786_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=127cfc&_nc_ohc=zovRoohnjUEQ7kNvgGzms7Q&_nc_oc=AdgkMx1S3LKzWHm36ZjiDqWrQTbYysW5BLjAsB4ot5WjvzR_xqPmhc5Deu0eQljaIU8&_nc_zt=23&_nc_ht=scontent.fblq4-1.fna&_nc_gid=A76jWLgdw77wIfmaZokgIBT&oh=00_AYBsX54ewYEPqHT09afwDFYgJdcnVk8wa7dIK_8yBuUrzw&oe=67BADDDE" width="150" height="150" alt="Moon fAIry logo">
+<img src="https://raw.githubusercontent.com/tresanti/moon_fairy_plugin/refs/heads/main/icon.PNG" width="150" height="150" alt="Moon fAIry logo">
 
 
 ## Description
