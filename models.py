@@ -3,10 +3,6 @@ import re
 from pydantic import BaseModel, Field, field_validator
 
 
-class Fable:
-    value: str | None = None
-    email: str = Field(..., description="email")
-
 
 class EmptyProps(BaseModel):
     pass

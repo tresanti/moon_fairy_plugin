@@ -4,11 +4,14 @@ from cat.mad_hatter.decorators import hook
 from cat.mad_hatter.decorators import plugin
 
 from cat.plugins.moon_fairy_plugin.email_service import send_smtp_email
-from cat.plugins.moon_fairy_plugin.models import Fable, EmailProps, EmptyProps
+from cat.plugins.moon_fairy_plugin.models import  EmailProps, EmptyProps
 from cat.plugins.moon_fairy_plugin.settings import FairySettings
 
-story_characters = 3000
+from typing import List
+from langchain.schema import BaseMessage, HumanMessage, AIMessage
 
+story_characters = 8000
+human_message = None
 
 @hook()
 def agent_prompt_prefix(prefix, cat):
@@ -41,6 +44,11 @@ def agent_prompt_prefix(prefix, cat):
                                            """
     return prefix
 
+@hook
+def agent_fast_reply(fast_reply, cat):
+    langchainfy_chat_history(cat)
+
+    return fast_reply
 
 @hook
 def agent_prompt_instructions(instructions, cat):
@@ -53,8 +61,6 @@ def before_cat_sends_message(final_output, cat):
     settings = cat.mad_hatter.get_plugin().load_settings()
     if not settings['use_smtp_email']:
         return final_output
-    if 'class="fable"' in final_output.text:
-        Fable.value = final_output.text
     if 'FINE' in final_output.text:
         final_output.text += '\n\nSe vuoi ricevere la favole via mail, rispondi:\n - Invia mail oppure non inviare.'
     return final_output
@@ -62,7 +68,7 @@ def before_cat_sends_message(final_output, cat):
 
 @hook
 def before_cat_recalls_episodic_memories(episodic_recall_config, cat):
-    episodic_recall_config["k"] = 3
+    episodic_recall_config["k"] = 1
 
     return episodic_recall_config
 
@@ -74,17 +80,9 @@ class EmailForm(CatForm):  #
     start_examples = [  #
         "send Email",
         "invia mail"
-        "send email",
-        "send Email",
-        "Send email",
-        "Send mail",
-        "Send Mail",
-        "send Mail",
-        "send mail"
     ]
     stop_examples = [  #
         'non inviare email',
-        "no",
         "not send",
         "not send email",
         "no send email"
@@ -92,25 +90,32 @@ class EmailForm(CatForm):  #
     ask_confirm = True  #
 
     def submit(self, form_data):  #
-        response = send_smtp_email('Ti insegno una favola.', str(Fable.value), self.extract()['email'], self._cat)
-        Fable.value = None
+        global human_message
+       
+        response = send_smtp_email('Ti insegno una favola.', str(human_message.content.split('FINE')[0] + 'FINE'), self.extract()['email'], self._cat)
+        self._cat.working_memory.agent_input.chat_history = []
         return {
             "output": f"{response}"
         }
 
     def message(self):  #
+        global human_message
         missing_fields: List[str] = self._missing_fields  #
         errors: List[str] = self._errors  #
         out: str = ''
+        if human_message.content is None:
+            self.check_exit_intent()
+            out = 'Ho dimenticato lastoria, ricominciamo ti va?'
+            return {
+                "output": out
+            }
+        
         if len(errors) > 0:
             out += f'\nPuoi controllare perchè le informazioni che mi hai dato non sono valise:{errors}'
+
         if len(missing_fields) > 0:
-            if Fable.value is None:
-                print('Fable.value is None')
-                self._state = CatFormState.CLOSED
-                out += "\n\nNon ho una favola da inviare."
-            else:
-                out += f"""\n\nHo bisogno di un email dove pote inviare la storia."""
+             out += self._cat.llm('chiedi la mail per inviare la storia, si conciso chiedi e basta non dare conferme o altro devi semplicemente chiedere la mail in modo gentile e chiaro')
+        
         if self._state == CatFormState.WAIT_CONFIRM:
             out += "\n Confermi l'invio?"
 
@@ -118,14 +123,17 @@ class EmailForm(CatForm):  #
             "output": out
         }
 
-    def model_getter(self):
-        settings = self._cat.mad_hatter.get_plugin().load_settings()
-        if not settings['use_smtp_email']:
-            self.model_class = EmptyProps
-        else:
-            self.model_class = EmailProps
 
-        return self.model_class
+
+def langchainfy_chat_history(self, latest_n: int = 10) :
+    global human_message
+    chat_history = self.working_memory.history[-latest_n:]
+    langchain_chat_history = []
+    for message in chat_history:
+        if message["role"] != "Human" and 'class="fable"' in message["message"]:
+            human_message = HumanMessage(message["message"])
+
+    return langchain_chat_history
 
 
 @plugin
