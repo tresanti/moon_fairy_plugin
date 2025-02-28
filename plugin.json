@@ -1,5 +1,5 @@
 {
-  "version": "0.0.2",
+  "version": "0.0.3",
   "name": "Moon fAIry",
   "description": "Use AI to generate educational fables in Italian (for now) and also receive them by email. The model returns the fable with html markup.",
   "author_name": "Ivan Santonastase",
