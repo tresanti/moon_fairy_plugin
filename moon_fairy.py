@@ -1,139 +1,115 @@
-from cat.experimental.form import CatForm, form
-from cat.experimental.form import CatFormState
-from cat.mad_hatter.decorators import hook
-from cat.mad_hatter.decorators import plugin
-
+from typing import List
+from cat.experimental.form import CatForm, form, CatFormState
+from cat.mad_hatter.decorators import hook, plugin
 from cat.plugins.moon_fairy_plugin.email_service import send_smtp_email
-from cat.plugins.moon_fairy_plugin.models import  EmailProps, EmptyProps
+from cat.plugins.moon_fairy_plugin.models import EmailProps
 from cat.plugins.moon_fairy_plugin.settings import FairySettings
 
-from typing import List
-from langchain.schema import BaseMessage, HumanMessage, AIMessage
-
-story_characters = 8000
-human_message = None
-
-@hook()
-def agent_prompt_prefix(prefix, cat):
-    prefix = f"""
-                        Il tuo nome è [Luna]. Sei un'intelligenza artificiale che crea favole creative e coinvolgenti per bambini partendo da un insegnamento che si vuole dare. Rispondi sempre in Italiano.\n
-                    #Regole di comportamento:\n
-                     - Puoi rispondere solo a domande su chi sei e cosa puoi fare. [Puoi inviare email]\n
-                     - Se la domanda è fuori contesto o irrilevante, rispondi semplicemente presentandoti.\n
-                     - Se richiesto, scrivi una favola per bambini con una morale chiara e una lezione utile.\n
-                    #Linee guida per le favole:\n
-                     - Titolo: Ogni favola deve iniziare con un titolo.\n
-                     - Struttura: Dopo il titolo, inizia subito la storia.\n
-                     - Linguaggio: Usa un linguaggio semplice e adatto ai bambini.\n
-                     - Coinvolgimento: Crea una trama avvincente con personaggi memorabili.\n
-                     - Morale: Concludi sempre con una morale chiara, ma senza essere eccessivamente didascalico.\n
-                    #Formato di output:\n
-                     - La favola deve essere composta da almeno {story_characters} caratteri.\n
-                     - Utilizza i seguenti tag per strutturare la risposta:\n
-                       <h1> Titolo </h1>>
-                        <div class="fable"> Favola </div>
-                        <div class="moral"> Morale </div>\n
-                     -Ogni favola deve terminare con la parola "<span>FINE</span>".\n
-                    #Esempio di risposta:\n
-                     <h1>>Il piccolo drago e la luce della luna</h1>  
-                        <div class="fable">C'era una volta un piccolo drago che aveva paura del buio... [SVILUPPO DELLA STORIA di 2000 worlds]... Alla fine, capì che la sua paura poteva essere superata con il coraggio e l'amicizia. </div>  
-                        <div class="moral">La paura si affronta meglio con il supporto di chi ci vuole bene. </div> <br> <span>FINE</span> \n
-                    #Note:\n
-                     - Adatta la complessità del racconto in base all'età del pubblico.\n
-                     - La morale deve emergere naturalmente dalla storia.\n'
-                                           """
-    return prefix
+STORY_CHARACTERS = 8000
+FAIRY_STORAGE = {}
 
 @hook
-def agent_fast_reply(fast_reply, cat):
-    langchainfy_chat_history(cat)
+def agent_prompt_prefix(prefix, cat):
+    # Definizione dell'identità e delle regole di output
+    prefix = f"""
+        Il tuo nome è [Luna]. Sei un'intelligenza artificiale che crea favole creative e coinvolgenti per bambini partendo da un insegnamento che si vuole dare. Rispondi sempre in Italiano.
 
-    return fast_reply
+        # Regole di comportamento:
+        - Puoi rispondere solo a domande su chi sei e cosa puoi fare. [Puoi inviare email]
+        - Se la domanda è fuori contesto o irrilevante, rispondi semplicemente presentandoti.
+        - Se richiesto, scrivi una favola per bambini con una morale chiara e una lezione utile.
+
+        # Linee guida per le favole:
+        - Titolo: Ogni favola deve iniziare con un titolo.
+        - Struttura: Dopo il titolo, inizia subito la storia.
+        - Linguaggio: Usa un linguaggio semplice e adatto ai bambini.
+        - Coinvolgimento: Crea una trama avvincente con personaggi memorabili.
+        - Morale: Concludi sempre con una morale chiara, ma senza essere eccessivamente didascalico.
+
+        # Formato di output:
+        - La favola deve essere composta da almeno {STORY_CHARACTERS} caratteri.
+        - Utilizza i seguenti tag HTML per strutturare la risposta:
+          <h1> Titolo </h1>
+          <div class="fable"> Favola </div>
+          <div class="moral"> Morale </div>
+        - Ogni favola deve terminare obbligatoriamente con la parola "<span>FINE</span>".
+
+        # Esempio di risposta:
+        <h1>Il piccolo drago e la luce della luna</h1>  
+        <div class="fable">C'era una volta un piccolo drago che aveva paura del buio... [SVILUPPO DELLA STORIA]...</div>  
+        <div class="moral">La paura si affronta meglio con il supporto di chi ci vuole bene.</div><br><span>FINE</span>
+    """
+    return prefix
+
 
 @hook
 def agent_prompt_instructions(instructions, cat):
-    instructions += f"""\nRicorda il Formato di output e che la storia sia di almeno di {story_characters} caratteri"""
+    instructions += f"\nRicorda di rispettare il formato di output e che la storia deve essere lunga almeno {STORY_CHARACTERS} caratteri."
     return instructions
 
 
 @hook
 def before_cat_sends_message(final_output, cat):
     settings = cat.mad_hatter.get_plugin().load_settings()
-    if not settings['use_smtp_email']:
-        return final_output
-    if 'FINE' in final_output.text:
-        final_output.text += '\n\nSe vuoi ricevere la favole via mail, rispondi:\n - Invia mail oppure non inviare.'
+
+    if 'class="fable"' in final_output.text or 'FINE' in final_output.text:
+        user_id = cat.user_id
+        FAIRY_STORAGE[user_id] = final_output.text
+
+        if settings.get('use_smtp_email', False):
+            final_output.text += '\n\n---\n✨ *Se vuoi ricevere questa favola via mail, scrivi "Invia mail".*'
+
     return final_output
 
 
-@hook
-def before_cat_recalls_episodic_memories(episodic_recall_config, cat):
-    episodic_recall_config["k"] = 1
+@form
+class EmailForm(CatForm):
+    description = "Procedura per l'invio della favola via email"
+    model_class = EmailProps
+    start_examples = ["invia mail", "mandami la storia per email", "spedisci favola"]
+    stop_examples = ["non inviare", "annulla invio", "no email"]
+    ask_confirm = True
 
-    return episodic_recall_config
+    def submit(self, form_data):
+        user_id = self._cat.user_id
+        fable_content = FAIRY_STORAGE.get(user_id)
 
+        if not fable_content:
+            return {"output": "Mi dispiace, non ho trovato favole recenti da inviare. Chiedimi di scriverne una!"}
 
-@form  #
-class EmailForm(CatForm):  #
-    description = "inviare storia via mail"  #
-    model_class = EmailProps  #
-    start_examples = [  #
-        "send Email",
-        "invia mail"
-    ]
-    stop_examples = [  #
-        'non inviare email',
-        "not send",
-        "not send email",
-        "no send email"
-    ]
-    ask_confirm = True  #
+        clean_text = fable_content.split('FINE')[0] + 'FINE'
 
-    def submit(self, form_data):  #
-        global human_message
-       
-        response = send_smtp_email('Ti insegno una favola.', str(human_message.content.split('FINE')[0] + 'FINE'), self.extract()['email'], self._cat)
-        self._cat.working_memory.agent_input.chat_history = []
-        return {
-            "output": f"{response}"
-        }
+        try:
+            response = send_smtp_email(
+                subject='Una favola per te da Luna 🌙',
+                body=clean_text,
+                to_email=self.extract()['email'],
+                cat=self._cat
+            )
 
-    def message(self):  #
-        global human_message
-        missing_fields: List[str] = self._missing_fields  #
-        errors: List[str] = self._errors  #
-        out: str = ''
-        if human_message.content is None:
+            return {"output": f"Email inviata con successo! {response}"}
+        except Exception as e:
+            return {"output": f"Errore durante l'invio: {str(e)}"}
+
+    def message(self):
+        user_id = self._cat.user_id
+        fable_content = FAIRY_STORAGE.get(user_id)
+
+        if not fable_content:
             self.check_exit_intent()
-            out = 'Ho dimenticato lastoria, ricominciamo ti va?'
-            return {
-                "output": out
-            }
-        
-        if len(errors) > 0:
-            out += f'\nPuoi controllare perchè le informazioni che mi hai dato non sono valise:{errors}'
+            return {"output": "Non ho ancora generato una favola per te. Vuoi che ne inventiamo una insieme adesso?"}
 
-        if len(missing_fields) > 0:
-             out += self._cat.llm('chiedi la mail per inviare la storia, si conciso chiedi e basta non dare conferme o altro devi semplicemente chiedere la mail in modo gentile e chiaro')
-        
+        if self._errors:
+            return {"output": f"L'indirizzo email non sembra corretto. Puoi scriverlo di nuovo?"}
+
+        if "email" in self._missing_fields:
+            return {"output": "A quale indirizzo email desideri ricevere la favola?"}
+
         if self._state == CatFormState.WAIT_CONFIRM:
-            out += "\n Confermi l'invio?"
+            email = self.extract().get('email')
+            return {"output": f"Sto per inviare la favola a {email}. Confermi?"}
 
-        return {
-            "output": out
-        }
-
-
-
-def langchainfy_chat_history(self, latest_n: int = 10) :
-    global human_message
-    chat_history = self.working_memory.history[-latest_n:]
-    langchain_chat_history = []
-    for message in chat_history:
-        if message["role"] != "Human" and 'class="fable"' in message["message"]:
-            human_message = HumanMessage(message["message"])
-
-    return langchain_chat_history
+        return None
 
 
 @plugin
